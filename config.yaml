@@ -1,0 +1,17 @@
+claimant:
+  name: Darren Hartono
+  student_id: "12345678"
+
+team:
+  name: Biological Internet of Things
+  worktag: PM016202
+
+project_name: ReUp
+
+default_category: Prototype Project
+
+monthly_split: true
+
+enable_ai_titles: true
+
+currency: CAD

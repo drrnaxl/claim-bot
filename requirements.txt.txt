@@ -1,0 +1,12 @@
+openpyxl
+pdfplumber
+pypdf
+pdf2image
+pillow
+pytesseract
+python-dateutil
+pyyaml
+pandas
+
+# optional
+openai
