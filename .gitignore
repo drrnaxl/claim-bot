@@ -1,0 +1,10 @@
+output/
+
+expense_db.json
+
+__pycache__/
+*.pyc
+
+.env
+
+.vscode/

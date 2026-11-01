@@ -1,8 +1,9 @@
 from pathlib import Path
 from collections import defaultdict
+from datetime import datetime
 
 from modules.extractor import *
-from modules.ai_helpers import *
+from modules.categorizer import *
 from modules.excel_writer import *
 from modules.receipt_db import *
 
@@ -60,7 +61,7 @@ for month, receipts in CLAIMS.items():
     populate_claim(
 
         template_file=
-        "template/ubcbiot-expenses-claim-form.xlsx",
+        "template/claim_template.xlsx",
 
         output_file=
         f"output/Claim_{month}.xlsx",

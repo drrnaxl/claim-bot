@@ -4,6 +4,9 @@ import pdfplumber
 from pdf2image import convert_from_path
 import pytesseract
 
+pytesseract.pytesseract.tesseract_cmd = (
+    r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+)
 
 def extract_pdf_text(pdf_file):
 
@@ -20,9 +23,8 @@ def extract_pdf_text(pdf_file):
                 if page_text:
                     text += page_text + "\n"
 
-    except:
-
-        pass
+    except Exception as e:
+        print("PDF extraction error:", e)
 
     return text
 
@@ -31,7 +33,22 @@ def extract_scanned_text(pdf_file):
 
     text = ""
 
-    pages = convert_from_path(pdf_file)
+    try:
+
+        pages = convert_from_path(
+            pdf_file,
+            poppler_path=r"C:\tools\poppler\Library\bin"
+        )
+    
+    except Exception as e:
+
+        print(
+            f"OCR failed: {pdf_file}"
+        )
+
+        print(e)
+
+        return ""
 
     for page in pages:
 
@@ -44,11 +61,17 @@ def get_text(pdf_file):
 
     text = extract_pdf_text(pdf_file)
 
-    if len(text.strip()) < 50:
+    if len(text.strip()) > 200:
+        return text
 
-        text = extract_scanned_text(pdf_file)
+    print(f"OCR fallback: {pdf_file}")
+
+    text = extract_scanned_text(pdf_file)
 
     return text
+
+
+from dateutil import parser
 
 
 def extract_date(text):
@@ -58,51 +81,72 @@ def extract_date(text):
         r"(\d{4}-\d{2}-\d{2})"
     ]
 
-    for p in patterns:
+    for pattern in patterns:
 
-        m = re.search(p, text)
+        m = re.search(pattern, text)
 
         if m:
-            return m.group(1)
+
+            try:
+
+                dt = parser.parse(
+                    m.group(1)
+                )
+
+                return dt.strftime(
+                    "%Y-%m-%d"
+                )
+
+            except Exception:
+                pass
 
     return ""
 
 
 def extract_amount(text):
 
-    amounts = []
+    import re
 
-    patterns = [
-        r"Total\s+\$?([0-9,]+\.[0-9]{2})",
-        r"CAD\$([0-9,]+\.[0-9]{2})"
-    ]
+    numbers = re.findall(
+        r"([0-9]+\.[0-9]{2})",
+        text
+    )
 
-    for pattern in patterns:
+    values = []
 
-        for m in re.finditer(
-                pattern,
-                text,
-                re.IGNORECASE):
+    for n in numbers:
 
-            try:
+        try:
+            values.append(float(n))
+        except:
+            pass
 
-                amounts.append(
-                    float(
-                        m.group(1)
-                        .replace(",", "")
-                    )
-                )
+    if not values:
+        return 0.0
 
-            except:
-                pass
+    # total is usually the largest value
+    return max(values)
 
-    if amounts:
-        return max(amounts)
 
-    return 0
+KNOWN_VENDORS = [
+    "Amazon",
+    "DigiKey",
+    "Mouser",
+    "Home Depot",
+    "BosaGrape",
+    "McMaster",
+    "AliExpress"
+]
 
 
 def extract_vendor(text):
+
+    lower = text.lower()
+
+    for vendor in KNOWN_VENDORS:
+
+        if vendor.lower() in lower:
+            return vendor
 
     lines = [
         x.strip()
@@ -111,6 +155,6 @@ def extract_vendor(text):
     ]
 
     if lines:
-        return lines[0]
+        return lines[0][:100]
 
     return "Unknown Vendor"
