@@ -18,3 +18,6 @@ settings:
   monthly_split: true
   enable_ai_titles: false
   currency: "CAD"
+
+exchange_rates:
+  USD: 1.4

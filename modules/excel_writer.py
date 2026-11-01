@@ -82,7 +82,10 @@ def populate_claim(
         ws[f"E{row}"] = amount
 
         # F = Exchange Rate
-        ws[f"F{row}"] = 1
+        ws[f"F{row}"] = item["exchange_rate"]
+
+        # G = Amount in Canadian
+        ws[f"G{row}"] = f"=E{row}*F{row}"
 
         # H = Expense Category
         ws[f"H{row}"] = item.get(
@@ -102,7 +105,7 @@ def populate_claim(
             ""
         )
 
-        total += amount
+        total += amount * item["exchange_rate"]
 
     wb.save(output_file)
 
@@ -111,16 +114,27 @@ def populate_claim(
 
 def fill_claimant_info(ws, config):
 
-    ws["A4"] = config["claimant"]["name"]
-    ws["A5"] = config["claimant"]["student_id"]
-    ws["A7"] = config["claimant"]["email"]
+    # Keep the template labels in columns A and I.
+    ws["E4"] = config["claimant"]["name"]
+    ws["E5"] = config["claimant"]["student_id"]
+
+    ws["E6"] = config["claimant"].get(
+        "mailing_address",
+        ""
+    )
+
+    ws["E7"] = config["claimant"]["email"]
 
     ws["J7"] = config["claimant"]["phone"]
 
     ws["J5"] = config["team"]["name"]
 
-    ws["H8"] = config["team"]["worktag"]
+    ws["E8"] = config["team"]["worktag"]
 
-    # today's date
+    ws["E35"] = config["claimant"]["name"]
+
     from datetime import date
-    ws["E4"] = date.today().strftime("%Y-%m-%d")
+
+    ws["J4"] = date.today().strftime(
+        "%Y-%m-%d"
+    )

@@ -1,16 +1,20 @@
-from pypdf import PdfMerger
+from pypdf import PdfWriter
 
 
 def merge_receipts(
         receipt_files,
         output_file):
 
-    merger = PdfMerger()
+    merger = PdfWriter()
 
-    for receipt in receipt_files:
+    try:
 
-        merger.append(receipt)
+        for receipt in receipt_files:
 
-    merger.write(output_file)
+            merger.append(receipt)
 
-    merger.close()
+        merger.write(output_file)
+
+    finally:
+
+        merger.close()

@@ -76,59 +76,116 @@ from dateutil import parser
 
 def extract_date(text):
 
+    # DigiKey places the dates below the headings.
+    lines = text.splitlines()
+
+    for index, line in enumerate(lines):
+
+        if (
+            "Order Date:" in line
+            and "Invoice Date:" in line
+        ):
+
+            following = " ".join(
+                lines[index + 1:index + 3]
+            )
+
+            dates = re.findall(
+                r"\d{1,2}-[A-Za-z]{3}-\d{4}",
+                following
+            )
+
+            if len(dates) >= 2:
+
+                return parser.parse(
+                    dates[1]
+                ).strftime("%Y-%m-%d")
+
     patterns = [
+        r"Invoice Date:\s*(\d{1,2}-[A-Za-z]{3}-\d{4})",
+        r"(\d{4}-\d{2}-\d{2})",
         r"(\d{1,2}/\d{1,2}/\d{4})",
-        r"(\d{4}-\d{2}-\d{2})"
+        r"(\d{1,2}-[A-Za-z]{3}-\d{4})"
     ]
 
     for pattern in patterns:
 
-        m = re.search(pattern, text)
+        m = re.search(
+            pattern,
+            text,
+            re.IGNORECASE
+        )
 
         if m:
 
             try:
 
-                dt = parser.parse(
+                return parser.parse(
                     m.group(1)
-                )
+                ).strftime("%Y-%m-%d")
 
-                return dt.strftime(
-                    "%Y-%m-%d"
-                )
+            except ValueError:
+                continue
 
-            except Exception:
-                pass
-
-    return ""
+    raise ValueError(
+        "Receipt date not found."
+    )
 
 
 def extract_amount(text):
 
-    import re
+    patterns = [
+        r"Total charged to credit card\s*:?\s*\$?\s*([\d,]+\.\d{2})",
+        r"Order Total\s*(?:\([A-Z]{3}\))?\s*:?\s*\$?\s*([\d,]+\.\d{2})",
+        r"Grand Total\s*:?\s*\$?\s*([\d,]+\.\d{2})",
+        r"^\s*Total\s*:?\s*\$?\s*([\d,]+\.\d{2})\s*$"
+    ]
 
-    numbers = re.findall(
-        r"([0-9]+\.[0-9]{2})",
-        text
+    for pattern in patterns:
+
+        matches = re.findall(
+            pattern,
+            text,
+            re.IGNORECASE | re.MULTILINE
+        )
+
+        if matches:
+
+            amounts = {
+                float(value.replace(",", ""))
+                for value in matches
+            }
+
+            if len(amounts) != 1:
+
+                raise ValueError(
+                    "Multiple receipt totals found."
+                )
+
+            return amounts.pop()
+
+    raise ValueError(
+        "Receipt total not found."
     )
 
-    values = []
+def extract_currency(text):
 
-    for n in numbers:
+    currencies = set(
+        re.findall(
+            r"\b(CAD|USD|EUR|GBP|AUD)\b",
+            text.upper()
+        )
+    )
 
-        try:
-            values.append(float(n))
-        except:
-            pass
+    if len(currencies) == 1:
+        return currencies.pop()
 
-    if not values:
-        return 0.0
-
-    # total is usually the largest value
-    return max(values)
-
+    raise ValueError(
+        "Receipt currency missing or ambiguous."
+    )
 
 KNOWN_VENDORS = [
+    "American Institute of Chemical Engineers",
     "Amazon",
     "DigiKey",
     "Mouser",

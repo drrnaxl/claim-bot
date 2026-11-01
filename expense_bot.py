@@ -1,11 +1,16 @@
 from pathlib import Path
 from collections import defaultdict
 import yaml
+import os
 
 from modules.extractor import *
 from modules.categorizer import *
 from modules.excel_writer import *
 from modules.receipt_db import *
+
+os.chdir(
+    Path(__file__).resolve().parent
+)
 
 def main():
 
@@ -38,6 +43,44 @@ def main():
         amount = extract_amount(text)
 
         date = extract_date(text)
+        
+        currency = extract_currency(text)
+
+        if currency == "CAD":
+
+            exchange_rate = 1.0
+
+        else:
+
+            exchange_rate = (
+                config
+                .get("exchange_rates", {})
+                .get(currency)
+            )
+
+            if exchange_rate is None:
+
+                raise ValueError(
+                    f"Missing {currency} exchange rate "
+                    f"for {pdf.name}. "
+                    "Add it to config.yaml."
+                )
+
+            exchange_rate = float(
+                exchange_rate
+            )
+
+            import math
+
+            if (
+                not math.isfinite(exchange_rate)
+                or exchange_rate <= 0
+            ):
+
+                raise ValueError(
+                    "Exchange rate must be "
+                    "a positive finite number."
+                )
 
         if already_claimed(
             vendor,
@@ -67,14 +110,12 @@ def main():
 
             "category": category,
 
-            "purpose": purpose
-        })
+            "purpose": purpose, 
+            
+            "currency": currency,
 
-        mark_claimed(
-            vendor,
-            amount,
-            date
-        )
+            "exchange_rate": exchange_rate,
+        })
 
         print(
             f"✅ {vendor} | "
@@ -97,6 +138,14 @@ def main():
 
             config=
             config
+        )
+        
+        for receipt in receipts:
+
+        mark_claimed(
+            receipt["vendor"],
+            receipt["amount"],
+            receipt["date"]
         )
 
         print(
