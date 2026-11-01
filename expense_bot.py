@@ -1,78 +1,108 @@
 from pathlib import Path
 from collections import defaultdict
-from datetime import datetime
+import yaml
 
 from modules.extractor import *
 from modules.categorizer import *
 from modules.excel_writer import *
 from modules.receipt_db import *
 
-CLAIMS = defaultdict(list)
+def main():
 
-for pdf in Path("receipts").glob(
-        "**/*.pdf"):
+    Path("output").mkdir(
+        exist_ok=True
+    )
 
-    text = get_text(pdf)
+    with open(
+        "config.yaml",
+        "r"
+    ) as f:
 
-    vendor = extract_vendor(text)
+        config = yaml.safe_load(f)
+        print(config)
 
-    amount = extract_amount(text)
+    claims = defaultdict(list)
 
-    date = extract_date(text)
-
-    if already_claimed(
-            vendor,
-            amount,
-            date):
+    for pdf in Path(
+        "receipts"
+    ).glob("**/*.pdf"):
 
         print(
-            f"Skipping duplicate: {vendor}"
+            f"Processing: {pdf.name}"
         )
 
-        continue
+        text = get_text(pdf)
 
-    category, purpose = (
-        classify_expense(text)
-    )
+        vendor = extract_vendor(text)
 
-    month = date[:7]
+        amount = extract_amount(text)
 
-    CLAIMS[month].append({
+        date = extract_date(text)
 
-        "vendor": vendor,
+        if already_claimed(
+            vendor,
+            amount,
+            date
+        ):
 
-        "date": date,
+            print(
+                f"Skipping duplicate: {vendor}"
+            )
 
-        "amount": amount,
+            continue
 
-        "category": category,
+        category, purpose = (
+            classify_expense(text)
+        )
 
-        "purpose": purpose
-    })
+        month = date[:7]
 
-    mark_claimed(
-        vendor,
-        amount,
-        date
-    )
+        claims[month].append({
 
-for month, receipts in CLAIMS.items():
+            "vendor": vendor,
 
-    populate_claim(
+            "date": date,
 
-        template_file=
-        "template/claim_template.xlsx",
+            "amount": amount,
 
-        output_file=
-        f"output/Claim_{month}.xlsx",
+            "category": category,
 
-        claim_data=
-        receipts,
+            "purpose": purpose
+        })
 
-        project_name=
-        "ReUp"
-    )
+        mark_claimed(
+            vendor,
+            amount,
+            date
+        )
 
-    print(
-        f"Generated Claim_{month}.xlsx"
-    )
+        print(
+            f"✅ {vendor} | "
+            f"${amount:.2f} | "
+            f"{date}"
+        )
+
+    for month, receipts in claims.items():
+
+        populate_claim(
+
+            template_file=
+            "template/claim_template.xlsx",
+
+            output_file=
+            f"output/Claim_{month}.xlsx",
+
+            claim_data=
+            receipts,
+
+            config=
+            config
+        )
+
+        print(
+            f"✅ Generated "
+            f"Claim_{month}.xlsx"
+        )
+
+if __name__ == "__main__":
+    main()

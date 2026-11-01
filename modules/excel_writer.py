@@ -31,11 +31,16 @@ def populate_claim(
         template_file,
         output_file,
         claim_data,
-        project_name):
+        config):
 
     wb = load_workbook(template_file)
 
     ws = wb["Claim Form"]
+    
+    fill_claimant_info(
+    ws,
+    config
+    )
 
     start_row = find_expense_table(ws)
 
@@ -79,9 +84,6 @@ def populate_claim(
         # F = Exchange Rate
         ws[f"F{row}"] = 1
 
-        # G = Amount in Canadian
-        ws[f"G{row}"] = amount
-
         # H = Expense Category
         ws[f"H{row}"] = item.get(
             "category",
@@ -89,8 +91,8 @@ def populate_claim(
         )
 
         # I = Project Name
-        ws[f"I{row}"] = project_name
-
+        ws[f"I{row}"] = config["project"]["name"]
+        
         # J = Missing Receipt
         ws[f"J{row}"] = ""
 
@@ -105,3 +107,20 @@ def populate_claim(
     wb.save(output_file)
 
     return total
+
+
+def fill_claimant_info(ws, config):
+
+    ws["A4"] = config["claimant"]["name"]
+    ws["A5"] = config["claimant"]["student_id"]
+    ws["A7"] = config["claimant"]["email"]
+
+    ws["J7"] = config["claimant"]["phone"]
+
+    ws["J5"] = config["team"]["name"]
+
+    ws["H8"] = config["team"]["worktag"]
+
+    # today's date
+    from datetime import date
+    ws["E4"] = date.today().strftime("%Y-%m-%d")

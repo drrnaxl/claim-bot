@@ -1,17 +1,20 @@
 claimant:
-  name: Darren Hartono
-  student_id: "12345678"
+  name: "Darren Hartono"
+  student_id: "19457175"
+  email: "dharto01@student.ubc.ca"
+  phone: "672-971-1545"
 
 team:
-  name: Biological Internet of Things
-  worktag: PM016202
+  name: "Biological Internet of Things"
+  worktag: "PM016202"
 
-project_name: ReUp
+project:
+  name: "ChemE Cube"
 
-default_category: Prototype Project
+defaults:
+  category: "Prototype Project"
 
-monthly_split: true
-
-enable_ai_titles: true
-
-currency: CAD
+settings:
+  monthly_split: true
+  enable_ai_titles: false
+  currency: "CAD"

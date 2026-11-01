@@ -1,0 +1,12 @@
+{
+  "darren": {
+    "name": "Darren Hartono",
+    "student_id": "19457175",
+    "email": "..."
+  },
+  "alice": {
+    "name": "Alice Smith",
+    "student_id": "87654321",
+    "email": "..."
+  }
+}
