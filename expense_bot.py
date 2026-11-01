@@ -1,5 +1,6 @@
 from pathlib import Path
 from collections import defaultdict
+from datetime import datetime
 import yaml
 import os
 
@@ -11,6 +12,7 @@ from modules.receipt_db import *
 os.chdir(
     Path(__file__).resolve().parent
 )
+
 
 def main():
 
@@ -43,7 +45,7 @@ def main():
         amount = extract_amount(text)
 
         date = extract_date(text)
-        
+
         currency = extract_currency(text)
 
         if currency == "CAD":
@@ -110,8 +112,8 @@ def main():
 
             "category": category,
 
-            "purpose": purpose, 
-            
+            "purpose": purpose,
+
             "currency": currency,
 
             "exchange_rate": exchange_rate,
@@ -123,24 +125,42 @@ def main():
             f"{date}"
         )
 
-    for month, receipts in claims.items():
+    receipts = [
+        receipt
+        for monthly_receipts in claims.values()
+        for receipt in monthly_receipts
+    ]
 
-        populate_claim(
+    receipts.sort(
+        key=lambda receipt: receipt["date"]
+    )
 
-            template_file=
-            "template/claim_template.xlsx",
+    if not receipts:
 
-            output_file=
-            f"output/Claim_{month}.xlsx",
+        print("No new receipts to process.")
 
-            claim_data=
-            receipts,
+        return
 
-            config=
-            config
-        )
-        
-        for receipt in receipts:
+    output_file = (
+        "output/Claim_All_"
+        f"{datetime.now():%Y%m%d_%H%M%S_%f}.xlsx"
+    )
+
+    populate_claim(
+        template_file=
+        "template/claim_template.xlsx",
+
+        output_file=
+        output_file,
+
+        claim_data=
+        receipts,
+
+        config=
+        config
+    )
+
+    for receipt in receipts:
 
         mark_claimed(
             receipt["vendor"],
@@ -148,10 +168,10 @@ def main():
             receipt["date"]
         )
 
-        print(
-            f"✅ Generated "
-            f"Claim_{month}.xlsx"
-        )
+    print(
+        f"Generated {output_file}"
+    )
+
 
 if __name__ == "__main__":
     main()
