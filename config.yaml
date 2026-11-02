@@ -3,6 +3,7 @@ claimant:
   student_id: "19457175"
   email: "dharto01@student.ubc.ca"
   phone: "672-971-1545"
+  mailing_address: "2360 East Mall, Vancouver BC V6T 1Z3"
 
 team:
   name: "Biological Internet of Things"
